@@ -125,15 +125,16 @@ public class Viewer3D extends Application {
         blueMaterial.setDiffuseColor(Color.DARKBLUE);
         blueMaterial.setSpecularColor(Color.BLUE);
 
-        Box xAxis = new Box(AXIS_LENGTH, 1, 1);
-        xAxis.setTranslateX(AXIS_LENGTH / 2);
-        Box yAxis = new Box(1, AXIS_LENGTH, 1);
-        yAxis.setTranslateY(AXIS_LENGTH / 2);
+        Box xAxis = new Box(AXIS_LENGTH * 2, 1, 1);
+        xAxis.setTranslateX(AXIS_LENGTH);
+        xAxis.setMaterial(redMaterial);
+
+        Box yAxis = new Box(1, AXIS_LENGTH * 2, 1);
+        yAxis.setTranslateY(AXIS_LENGTH);
+        yAxis.setMaterial(greenMaterial);
+
         Box zAxis = new Box(1, 1, AXIS_LENGTH);
         zAxis.setTranslateZ(AXIS_LENGTH / 2);
-
-        xAxis.setMaterial(redMaterial);
-        yAxis.setMaterial(greenMaterial);
         zAxis.setMaterial(blueMaterial);
 
         axisGroup.getChildren().addAll(xAxis, yAxis, zAxis);
@@ -181,9 +182,16 @@ public class Viewer3D extends Application {
                     cameraXform.rx.setAngle(cameraXform.rx.getAngle() + mouseDeltaY*MOUSE_SPEED*modifier*ROTATION_SPEED);  
                 }
                 else if (me.isSecondaryButtonDown()) {
-                    double z = camera.getTranslateZ();
-                    double newZ = z + mouseDeltaX*MOUSE_SPEED*modifier;
-                    camera.setTranslateZ(newZ);
+//                    cameraXform.rx.setAngle(cameraXform.rx.getAngle() - mouseDeltaX*MOUSE_SPEED*modifier*ROTATION_SPEED);
+//                    cameraXform.rz.setAngle(cameraXform.rz.getAngle() + mouseDeltaY*MOUSE_SPEED*modifier*ROTATION_SPEED);
+
+                    double x = camera.getTranslateX();
+                    double newx = x + mouseDeltaX*MOUSE_SPEED*modifier;
+                    camera.setTranslateX(newx);
+
+                    double y = camera.getTranslateY();
+                    double newy = x + mouseDeltaY*MOUSE_SPEED*modifier;
+                    camera.setTranslateY(newy);
                 }
                 else if (me.isMiddleButtonDown()) {
                     cameraXform2.t.setX(cameraXform2.t.getX() + mouseDeltaX*MOUSE_SPEED*modifier*TRACK_SPEED);  
@@ -258,7 +266,7 @@ public class Viewer3D extends Application {
         root.getChildren().add(world);
         root.setDepthTest(DepthTest.ENABLE);
 
-        mBoids = new Boids();
+        mBoids = new Boids(50);
 
         buildCamera();
         buildAxes();
@@ -280,6 +288,12 @@ public class Viewer3D extends Application {
             public void handle(long now) {
 
                 if (mBoids.move()) {
+
+                    if ((++frameCounter % 30) == 0) {
+                        double[] com = mBoids.getCenterOfMass();
+                        addCenterOfMass(com);
+                    }
+
                     List<Boid> v = mBoids.getBoids();
 
                     for (int i = 0; i < v.size(); ++i) {
@@ -294,6 +308,32 @@ public class Viewer3D extends Application {
                 }
             }
         }.start();
+    }
+
+    private long frameCounter = 0;
+
+    private PhongMaterial mComMaterial = null;
+    private void addCenterOfMass(double[] com) {
+        if (mComMaterial == null) {
+            mComMaterial = new PhongMaterial();
+            mComMaterial.setDiffuseColor(Color.BLUE);
+            mComMaterial.setSpecularColor(Color.LIGHTBLUE);
+        }
+
+        Xform f = new Xform();
+        f.setTranslateX(com[0]);
+        f.setTranslateY(com[1]);
+        f.setTranslateZ(com[2]);
+
+        mBoidGroup.getChildren().add(f);
+
+        // only keep 10 around
+        if (mBoidGroup.getChildren().size() > 20)
+            mBoidGroup.getChildren().remove(1);
+
+        Sphere s = new Sphere(5.0);
+        s.setMaterial(mComMaterial);
+        f.getChildren().add(s);
     }
 
     /**

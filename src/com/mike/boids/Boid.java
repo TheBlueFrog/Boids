@@ -43,10 +43,19 @@ public class Boid {
      * @param delta
      */
     public void changeVelocity(double[] delta) {
+
+        double absDelta = Vectors.abs(delta);
+        if (absDelta > (mVelocityLimit / 3)) {
+            // to large a change in velocity
+            double[] v = Vectors.mult((Vectors.divide(delta, absDelta)), (mVelocityLimit / 3));
+            delta = v;
+        }
+
         mVelocity = Vectors.add(mVelocity, delta);
 
         double abs = Vectors.abs(getVelocity());
         if (abs > mVelocityLimit) {
+            // can't go that fast
             double[] v = Vectors.mult((Vectors.divide(getVelocity(), abs)), mVelocityLimit);
             mVelocity = v;
         }

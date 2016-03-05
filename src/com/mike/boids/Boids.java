@@ -50,7 +50,15 @@ import java.util.Random;
             };
 
 
-    public Boids() {
+    // stuff collected during run
+
+    private double[] mCenterOfMass;
+
+
+    public Boids(int numBoids)
+    {
+        mNumBoids = numBoids;
+
         init();
     }
 
@@ -105,11 +113,12 @@ import java.util.Random;
      */
 
     // trickier than it looks
-    static private long mNextMoveTime = 0;
-    static private long mLastMoveTime = 0;
+    static private long mNextMoveTime_ms = 0;
+    static private long mLastMoveTime_ms = 0;
 
-    static private double mTargetFrameRate = 10;
+    static private double mTargetFrameRate = 10;    // per second
     static private double mTargetDeltaT = 1.0 / mTargetFrameRate;
+    static private long mTargetDeltaT_ms = Math.round(mTargetDeltaT * 1000);
 
     /**
      *
@@ -117,25 +126,30 @@ import java.util.Random;
      */
     public boolean move() {
 
-        long now = System.currentTimeMillis();
-//        TimeUnit.SECONDS.convert(start6, TimeUnit.MILLISECONDS);
-        if (now < mNextMoveTime)
+        long now_ms = System.currentTimeMillis();
+
+        if (now_ms < mNextMoveTime_ms)
             return false;
 
         // handle startup transient because we attempt to
         // catch up if running behind
-        if (mLastMoveTime == 0)
-            mLastMoveTime = now - Math.round(mTargetDeltaT + 10.0);
+        if (mLastMoveTime_ms == 0)
+            mLastMoveTime_ms = now_ms - mTargetDeltaT_ms + 10;
 
         // get delta time in seconds
-        double deltaT = (now - mLastMoveTime) / 1000.0;
-        mNextMoveTime = mLastMoveTime + Math.round(mTargetDeltaT);
-        mLastMoveTime = now;
+        double deltaT = (now_ms - mLastMoveTime_ms) / 1000.0;
+        if (deltaT > (mTargetDeltaT * 1.1))
+            log(String.format("Running behind %9.4f", deltaT ));
+
+        mNextMoveTime_ms = mLastMoveTime_ms + mTargetDeltaT_ms + mTargetDeltaT_ms;
+        mLastMoveTime_ms = now_ms;
 
         // if we are so behind that we've already missed the
         // next move then just catch up
-        if (mNextMoveTime < now)
-            mNextMoveTime = now + Math.round(mTargetDeltaT);
+        if (mNextMoveTime_ms < now_ms) {
+            log(String.format("Missed a frame, catching up "));
+            mNextMoveTime_ms = now_ms + mTargetDeltaT_ms;
+        }
 
 //        log(String.format("time: %d, %9.7f", now, deltaT));
 
@@ -201,14 +215,14 @@ import java.util.Random;
      * @return
      */
     private double[] rule1(Boid boid) {
-        double[] pcJ = null;
-        ;
+        double[] pcJ = Vectors.init();
 
         for (Boid b : mBoids)
             if (b != boid)
                 pcJ = Vectors.add(pcJ, b.getLocation());
 
         pcJ = Vectors.divide(pcJ, mBoids.size() - 1);
+        mCenterOfMass = pcJ;
 
         return Vectors.divide(Vectors.subtract(pcJ, boid.getLocation()), 100.0);
     }
@@ -248,6 +262,12 @@ import java.util.Random;
     // motion reversed, would appear unnatural, as if they bounced off each other's invisible force fields.
     // Instead, we have them slow down and accelerate away from each other until they are far enough apart for
     // our liking.
+
+    // Rule 3: boids try to match velocity with near boids.
+    //
+    // This is similar to Rule 1, however instead of averaging the positions of the other boids we average
+    // the velocities. We calculate a 'perceived velocity', pvJ, then add a small portion (about an eighth)
+    // to the boid's current velocity.
 
     private double[] rule3(Boid boid) {
         double[] v = Vectors.init();
@@ -317,6 +337,9 @@ import java.util.Random;
         return mWind;
     }
 
+    public double[] getCenterOfMass() {
+        return mCenterOfMass;
+    }
 }
 
 
