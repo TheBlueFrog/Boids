@@ -42,9 +42,9 @@ import java.util.Random;
     // rule coefficients
     private double[] mRuleScale = new double[]
             {
-                    1.0,    // rule1
-                    1.0,    // rule2
-                    1.0,    // rule3
+                    0.8,    // rule1  fly towards the centre of mass of neighbouring boids.
+                    1.0,    // rule2  keep a small distance away from other objects (including other boids).
+                    1.0,    // rule3  match velocity with near boids
                     0.5,    // tendencyToPlace
                     0.1,    // wind
             };

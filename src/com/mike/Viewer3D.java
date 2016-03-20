@@ -76,7 +76,7 @@ public class Viewer3D extends Application {
     private static final double CAMERA_INITIAL_Y_ANGLE = 320.0;
     private static final double CAMERA_NEAR_CLIP = 0.1;
     private static final double CAMERA_FAR_CLIP = 10000.0;
-    private static final double AXIS_LENGTH = 250.0;
+    private static final double AXIS_LENGTH = 1000.0;
     private static final double CONTROL_MULTIPLIER = 0.1;
     private static final double SHIFT_MULTIPLIER = 10.0;
     private static final double MOUSE_SPEED = 0.1;
@@ -111,35 +111,33 @@ public class Viewer3D extends Application {
         cameraXform.rx.setAngle(CAMERA_INITIAL_X_ANGLE);
     }
 
+
     private void buildAxes() {
         System.out.println("buildAxes()");
-        final PhongMaterial redMaterial = new PhongMaterial();
-        redMaterial.setDiffuseColor(Color.DARKRED);
-        redMaterial.setSpecularColor(Color.RED);
 
-        final PhongMaterial greenMaterial = new PhongMaterial();
-        greenMaterial.setDiffuseColor(Color.DARKGREEN);
-        greenMaterial.setSpecularColor(Color.GREEN);
+        Box x = buildAxis(Color.RED, AXIS_LENGTH * 2, 1, 1);
+        x.setTranslateX(AXIS_LENGTH);
 
-        final PhongMaterial blueMaterial = new PhongMaterial();
-        blueMaterial.setDiffuseColor(Color.DARKBLUE);
-        blueMaterial.setSpecularColor(Color.BLUE);
+        Box y = buildAxis(Color.GREEN, 1, AXIS_LENGTH * 2, 1);
+        y.setTranslateY(AXIS_LENGTH);
 
-        Box xAxis = new Box(AXIS_LENGTH * 2, 1, 1);
-        xAxis.setTranslateX(AXIS_LENGTH);
-        xAxis.setMaterial(redMaterial);
+        Box z = buildAxis(Color.BLUE, 1, 1, AXIS_LENGTH * 2);
+        z.setTranslateZ(AXIS_LENGTH);
 
-        Box yAxis = new Box(1, AXIS_LENGTH * 2, 1);
-        yAxis.setTranslateY(AXIS_LENGTH);
-        yAxis.setMaterial(greenMaterial);
-
-        Box zAxis = new Box(1, 1, AXIS_LENGTH);
-        zAxis.setTranslateZ(AXIS_LENGTH / 2);
-        zAxis.setMaterial(blueMaterial);
-
-        axisGroup.getChildren().addAll(xAxis, yAxis, zAxis);
+        axisGroup.getChildren().addAll(x, y, z);
         axisGroup.setVisible(true);
         world.getChildren().addAll(axisGroup);
+    }
+
+    private Box buildAxis(Color c, double x, double y, double z) {
+        final PhongMaterial m = new PhongMaterial();
+        m.setDiffuseColor(c);
+        m.setSpecularColor(c);
+
+        Box a = new Box(x, y, z);
+        a.setMaterial(m);
+
+        return a;
     }
 
     private void handleMouse(Scene scene, final Node root) {
